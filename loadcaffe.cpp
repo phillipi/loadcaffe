@@ -122,6 +122,8 @@ void convertProtoToLuaV1(const caffe::NetParameter &netparam, const char* lua_na
         int kH = param.kernel_h();
         int dW = param.stride_w();
         int dH = param.stride_h();
+        int dilationW = param.dilation();
+        int dilationH = dilationW;
         if(kW==0 || kH==0)
         {
           kW = param.kernel_size();
@@ -146,6 +148,10 @@ void convertProtoToLuaV1(const caffe::NetParameter &netparam, const char* lua_na
             std::cout << "ccn2 only supports square images!\n";
             break;
           }
+          if (dilationW != 1 || dilationH != 1)
+	  {
+	    std::cout << "ccn2 does not support dilation";
+          }
           char buf[1024];
           sprintf(buf, "ccn2.SpatialConvolution(%d, %d, %d, %d, %d, %d)",
               nInputPlane, nOutputPlane, kW, dW, pad_w, groups);
@@ -159,12 +165,16 @@ void convertProtoToLuaV1(const caffe::NetParameter &netparam, const char* lua_na
             break;
           }
           char buf[1024];
-          sprintf(buf, "nn.SpatialConvolution(%d, %d, %d, %d, %d, %d, %d, %d)",
-              nInputPlane, nOutputPlane, kW, kH, dW, dH, pad_w, pad_h);
+          sprintf(buf, "nn.SpatialDilatedConvolution(%d, %d, %d, %d, %d, %d, %d, %d, %d, %d)",
+		  nInputPlane, nOutputPlane, kW, kH, dW, dH, pad_w, pad_h, dilationW, dilationH);
           lines.emplace_back(layer.name(), buf);
         }
         else
         {
+          if (dilationW != 1 || dilationH != 1)
+	  {
+	    std::cout << "cudnn does not support dilation";
+	  }
           char buf[1024];
           sprintf(buf, "cudnn.SpatialConvolution(%d, %d, %d, %d, %d, %d, %d, %d, %d)",
               nInputPlane, nOutputPlane, kW, kH, dW, dH, pad_w, pad_h, groups);
@@ -379,6 +389,8 @@ void convertProtoToLuaV2(const caffe::NetParameter &netparam, const char* lua_na
       int kH = param.kernel_h();
       int dW = param.stride_w();
       int dH = param.stride_h();
+      int dilationW = param.dilation();
+      int dilationH = dilationW;
       if(kW==0 || kH==0)
       {
         kW = param.kernel_size();
@@ -403,6 +415,10 @@ void convertProtoToLuaV2(const caffe::NetParameter &netparam, const char* lua_na
           std::cout << "ccn2 only supports square images!\n";
           break;
         }
+	if (dilationW != 1 || dilationH != 1)
+        {
+	  std::cout << "ccn2 does not support dilation";
+	}
         char buf[1024];
         sprintf(buf, "ccn2.SpatialConvolution(%d, %d, %d, %d, %d, %d)",
             nInputPlane, nOutputPlane, kW, dW, pad_w, groups);
@@ -416,12 +432,16 @@ void convertProtoToLuaV2(const caffe::NetParameter &netparam, const char* lua_na
           break;
         }
         char buf[1024];
-        sprintf(buf, "nn.SpatialConvolution(%d, %d, %d, %d, %d, %d, %d, %d)",
-            nInputPlane, nOutputPlane, kW, kH, dW, dH, pad_w, pad_h);
+        sprintf(buf, "nn.SpatialDilatedConvolution(%d, %d, %d, %d, %d, %d, %d, %d, %d, %d)",
+		nInputPlane, nOutputPlane, kW, kH, dW, dH, pad_w, pad_h, dilationW, dilationH);
         lines.emplace_back(layer.name(), buf);
       }
       else
       {
+	if (dilationW != 1 || dilationH != 1)
+        {
+	  std::cout << "cudnn does not support dilation";
+	} 
         char buf[1024];
         sprintf(buf, "cudnn.SpatialConvolution(%d, %d, %d, %d, %d, %d, %d, %d, %d)",
             nInputPlane, nOutputPlane, kW, kH, dW, dH, pad_w, pad_h, groups);
